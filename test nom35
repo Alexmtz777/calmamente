@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test NOM-035</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { color: #333; }
+        nav { margin: 20px 0; }
+        button { padding: 10px 20px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        form { background: white; padding: 20px; border-radius: 5px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test NOM-035</h1>
+        <nav>
+            <button onclick="window.location.href='index.html'">Inicio</button>
+            <button onclick="window.location.href='pausas_activas.html'">Pausas Activas</button>
+            <button onclick="window.location.href='diario_emocional.html'">Diario Emocional</button>
+            <button onclick="window.location.href='consejos_breves.html'">Consejos Breves</button>
+            <button onclick="window.location.href='checklist_nom035.html'">Checklist NOM-035</button>
+            <button id="logout-btn">Cerrar Sesión</button>
+        </nav>
+
+        <!-- Formulario del test -->
+        <form id="test-form">
+            <p>1. ¿Sientes que tu carga de trabajo es excesiva?</p>
+            <input type="radio" name="q1" value="Sí"> Sí
+            <input type="radio" name="q1" value="No"> No<br><br>
+            <p>2. ¿Experimentas estrés frecuentemente en tu trabajo?</p>
+            <input type="radio" name="q2" value="Sí"> Sí
+            <input type="radio" name="q2" value="No"> No<br><br>
+            <button type="submit">Enviar</button>
+        </form>
+        <div id="result" class="hidden"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZb5qJmKnrFe3PUWj3J15xEwWg4B_kZzE",
+            authDomain: "calmamento-b1fb8.firebaseapp.com",
+            projectId: "calmamento-b1fb8",
+            storageBucket: "calmamento-b1fb8.firebasestorage.app",
+            messagingSenderId: "68823802605",
+            appId: "1:68823802605:web:917b2ec0ac113b3bbce2e4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) window.location.href = 'index.html';
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
+
+        document.getElementById('test-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+            const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+            if (!q1 || !q2) return alert("Por favor responde todas las preguntas");
+
+            const result = (q1 === "Sí" || q2 === "Sí") ? "Podrías estar experimentando factores de riesgo psicosocial." : "Tu bienestar laboral parece estar en buen estado.";
+            document.getElementById('result').textContent = result;
+            document.getElementById('result').classList.remove('hidden');
+
+            await addDoc(collection(db, "test_nom035"), {
+                userId: auth.currentUser.uid,
+                q1, q2,
+                timestamp: new Date()
+            });
+        });
+    </script>
+</body>
+</html>
